@@ -3,8 +3,8 @@
 import { BarChart3, FileText, Gauge, LogOut, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { clearDemoAuthSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { clearDemoAuthState } from "@/lib/auth";
 import { merchant } from "@/lib/mock-data/mock-data";
 
 interface SidebarProps {
@@ -32,7 +32,7 @@ export function Sidebar({ navItems, activePath, mobile = false, open = true, onN
   const router = useRouter();
 
   const handleSignOut = () => {
-    clearDemoAuthState();
+    clearDemoAuthSession();
     router.push("/login");
   };
 

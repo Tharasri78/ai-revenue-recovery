@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
-import { getDemoAuthState, isProtectedPath } from "@/lib/auth";
+import { getDemoAuthSession, isProtectedMerchantPath } from "@/lib/auth";
 import { merchant } from "@/lib/mock-data/mock-data";
 
 const navigation = [
@@ -43,18 +43,27 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   useEffect(() => {
-    const auth = getDemoAuthState();
+    const auth = getDemoAuthSession();
 
-    if (pathname === "/login") {
-      if (auth.isAuthenticated) {
-        router.replace("/dashboard");
-      }
+    if (pathname === "/login" && auth?.isAuthenticated) {
+      router.replace("/dashboard");
       return;
     }
 
-    if (isProtectedPath(pathname) && !auth.isAuthenticated) {
-      router.replace("/login");
+    if (pathname === "/unauthorized" && auth?.isAuthenticated && auth.role !== "CUSTOMER") {
+      router.replace("/dashboard");
       return;
+    }
+
+    if (isProtectedMerchantPath(pathname)) {
+      if (!auth?.isAuthenticated) {
+        router.replace("/login");
+        return;
+      }
+
+      if (auth.role === "CUSTOMER") {
+        router.replace("/unauthorized");
+      }
     }
   }, [pathname, router]);
 

@@ -6,9 +6,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { getDemoAuthState, setDemoAuthState } from "@/lib/auth";
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { getDemoAuthSession } from "@/lib/auth";
+import { authLogin } from "@/services/auth";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,9 +18,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const auth = getDemoAuthState();
-
-    if (auth.isAuthenticated) {
+    if (getDemoAuthSession()?.isAuthenticated) {
       router.replace("/dashboard");
     }
   }, [router]);
@@ -29,22 +26,13 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-
-    if (!EMAIL_REGEX.test(trimmedEmail)) {
-      setError("Enter a valid merchant email address.");
-      return;
+    try {
+      setError("");
+      await authLogin({ email, password, rememberMe });
+      router.push("/dashboard");
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : "Unable to sign in.");
     }
-
-    if (trimmedPassword.length < 8) {
-      setError("Password must be at least 8 characters long.");
-      return;
-    }
-
-    setError("");
-    setDemoAuthState(trimmedEmail);
-    router.push("/dashboard");
   }
 
   return (
@@ -163,10 +151,10 @@ export default function LoginPage() {
             </form>
 
             <div className="mt-6 border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-sm text-[#B7AEA2]">Demo merchant</span>
-                <Link href="/dashboard" className="text-sm font-medium text-[#D7A455]">
-                  Open demo environment
+              <div className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-[#B7AEA2]">Demo merchant</span>
+                <Link href="/signup" className="font-medium text-[#D7A455]">
+                  Don't have an account? Create merchant account
                 </Link>
               </div>
             </div>

@@ -1,6 +1,6 @@
 import {
   clearDemoAuthSession,
-  getDemoAuthSession,
+  getAuthToken,
   setAuthToken,
   setDemoAuthSession,
   type DemoAuthSession,
@@ -33,8 +33,8 @@ export async function authLogout(): Promise<void> {
 }
 
 export async function authGetCurrentUser(): Promise<AuthSession | null> {
-  const current = getDemoAuthSession();
-  if (!current) return null;
+  if (!getAuthToken()) return null;
+
   try {
     const response = await apiRequest<{ user: BackendUser; merchant: BackendMerchant }>("/auth/me");
     const session = toSession(response.user, response.merchant);
@@ -53,9 +53,9 @@ export async function authVerifyEmail(email: string): Promise<{ verified: boolea
 }
 
 export async function merchantCompleteOnboarding(payload: OnboardingPayload): Promise<AuthSession> {
-  const current = getDemoAuthSession();
+  const current = await authGetCurrentUser();
 
-  if (!current || current.role !== "MERCHANT") {
+  if (!current || !["MERCHANT_ADMIN", "MERCHANT_OPERATOR"].includes(current.role)) {
     throw new Error("Merchant authentication is required to complete onboarding.");
   }
 
@@ -65,14 +65,16 @@ export async function merchantCompleteOnboarding(payload: OnboardingPayload): Pr
     merchantName: payload.businessName || current.merchantName || "Northwind Studio",
   };
 
+  // No onboarding persistence endpoint exists yet. Keep this completion flag local
+  // until the backend exposes a merchant onboarding/profile update API.
   setDemoAuthSession(updated, true);
   return updated;
 }
 
 export async function merchantGetProfile() {
-  const current = getDemoAuthSession();
+  const current = await authGetCurrentUser();
 
-  return current && current.role === "MERCHANT"
+  return current && ["MERCHANT_ADMIN", "MERCHANT_OPERATOR"].includes(current.role)
     ? {
         merchantId: current.merchantId,
         businessName: current.merchantName ?? "Northwind Studio",

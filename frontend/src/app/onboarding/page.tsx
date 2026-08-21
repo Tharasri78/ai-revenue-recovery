@@ -4,8 +4,7 @@ import { ArrowRight, CheckCircle2, PlugZap, ShieldCheck, Sparkles } from "lucide
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { merchantCompleteOnboarding } from "@/services/auth";
-import { getDemoAuthSession } from "@/lib/auth";
+import { authGetCurrentUser, merchantCompleteOnboarding } from "@/services/auth";
 
 const steps = [
   "Business information",
@@ -23,9 +22,11 @@ export default function OnboardingPage() {
   const [gatewayConnected, setGatewayConnected] = useState(false);
 
   useEffect(() => {
-    if (!getDemoAuthSession()?.isAuthenticated) {
-      router.replace("/login");
-    }
+    authGetCurrentUser().then((current) => {
+      if (!current || !["MERCHANT_ADMIN", "MERCHANT_OPERATOR"].includes(current.role)) {
+        router.replace("/login");
+      }
+    });
   }, [router]);
 
   async function handleFinish() {

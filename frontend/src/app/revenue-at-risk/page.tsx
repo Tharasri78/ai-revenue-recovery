@@ -17,7 +17,7 @@ export default function RevenueAtRiskPage() {
   const [result, setResult] = useState<PaginatedResponse<ApiTransaction> | null>(null);
   const [error, setError] = useState("");
   useEffect(() => {
-    getTransactions({ status: "FAILED", limit: 100 }).then(setResult).catch((cause) => {
+    getTransactions({ paymentStatus: "FAILED", limit: 100 }).then(setResult).catch((cause) => {
       if (cause instanceof ApiError && cause.status === 401) router.replace("/login");
       setError(cause instanceof Error ? cause.message : "Unable to load revenue at risk.");
     });

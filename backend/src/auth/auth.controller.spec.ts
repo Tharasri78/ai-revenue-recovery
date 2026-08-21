@@ -1,6 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
+import { PermissionsGuard } from './guards/permissions.guard';
+import { PrismaService } from '../prisma/prisma.service';
 
 describe('AuthController', () => {
   let controller: AuthController;
@@ -17,6 +19,8 @@ describe('AuthController', () => {
             me: jest.fn(),
           },
         },
+        PermissionsGuard,
+        { provide: PrismaService, useValue: { role: { findUnique: jest.fn() } } },
       ],
     }).compile();
 

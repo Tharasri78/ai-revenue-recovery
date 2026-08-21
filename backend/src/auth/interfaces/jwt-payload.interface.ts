@@ -1,5 +1,3 @@
-export interface JwtPayload {
-  userId: string;
-  merchantId: string;
-  role: string;
-}
+import { AuthUser } from './auth-user.interface';
+
+export type JwtPayload = AuthUser;

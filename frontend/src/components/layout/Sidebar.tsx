@@ -2,7 +2,9 @@
 
 import { BarChart3, FileText, Gauge, LogOut, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { clearDemoAuthState } from "@/lib/auth";
 import { merchant } from "@/lib/mock-data/mock-data";
 
 interface SidebarProps {
@@ -27,6 +29,13 @@ const icons = {
 };
 
 export function Sidebar({ navItems, activePath, mobile = false, open = true, onNavigate, onClose }: SidebarProps) {
+  const router = useRouter();
+
+  const handleSignOut = () => {
+    clearDemoAuthState();
+    router.push("/login");
+  };
+
   const content = (
     <aside
       className={cn(
@@ -98,7 +107,11 @@ export function Sidebar({ navItems, activePath, mobile = false, open = true, onN
         </div>
       </div>
 
-      <button className="mt-4 flex items-center gap-2 px-2 text-sm text-[#B7AEA2] hover:text-[#F5F0E6]" type="button">
+      <button
+        className="mt-4 flex items-center gap-2 px-2 text-sm text-[#B7AEA2] hover:text-[#F5F0E6]"
+        type="button"
+        onClick={handleSignOut}
+      >
         <LogOut size={15} />
         Sign out
       </button>

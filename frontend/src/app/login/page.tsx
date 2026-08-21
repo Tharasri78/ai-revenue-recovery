@@ -1,13 +1,56 @@
+"use client";
+
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { getDemoAuthState, setDemoAuthState } from "@/lib/auth";
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [email, setEmail] = useState("aarav@northwindstudio.in");
+  const [password, setPassword] = useState("demo123");
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    const auth = getDemoAuthState();
+
+    if (auth.isAuthenticated) {
+      router.replace("/dashboard");
+    }
+  }, [router]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+
+    if (!EMAIL_REGEX.test(trimmedEmail)) {
+      setError("Enter a valid merchant email address.");
+      return;
+    }
+
+    if (trimmedPassword.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    setError("");
+    setDemoAuthState(trimmedEmail);
+    router.push("/dashboard");
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0B0B0A] px-4 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-[#0B0B0A] px-3 py-8 sm:px-4 sm:py-12">
       <div className="grid w-full max-w-6xl overflow-hidden rounded-2xl border border-white/10 bg-[#121210] shadow-[0_0_0_1px_rgba(255,255,255,0.02)] lg:grid-cols-[1.1fr_0.9fr]">
-        <div className="border-b border-white/10 bg-[#121210] p-8 md:p-12 lg:border-b-0 lg:border-r">
+        <div className="border-b border-white/10 bg-[#121210] p-6 sm:p-8 md:p-12 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-md bg-[#D7A455] text-sm font-semibold text-[#0B0B0A]">AR</div>
             <div>
@@ -16,9 +59,9 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <div className="mt-12 max-w-md">
+          <div className="mt-10 max-w-md sm:mt-12">
             <p className="text-xs uppercase tracking-[0.2em] text-[#D7A455]">Merchant operations</p>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[#F5F0E6]">
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-[#F5F0E6] sm:text-4xl">
               Protect revenue before it disappears.
             </h1>
             <p className="mt-4 max-w-sm text-base text-[#B7AEA2]">
@@ -26,7 +69,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="mt-10 space-y-4">
+          <div className="mt-8 space-y-3 sm:mt-10 sm:space-y-4">
             {[
               "Revenue at risk surveillance",
               "AI decisioning with policy checks",
@@ -39,46 +82,88 @@ export default function LoginPage() {
             ))}
           </div>
 
-          <div className="mt-10 flex items-center gap-2 rounded-md border border-[#D7A455]/20 bg-[#D7A455]/10 px-3 py-2 text-sm text-[#F3C77F]">
+          <div className="mt-8 flex items-center gap-2 rounded-md border border-[#D7A455]/20 bg-[#D7A455]/10 px-3 py-2 text-sm text-[#F3C77F] sm:mt-10">
             <ShieldCheck size={16} />
             Demo environment · Test Mode
           </div>
         </div>
 
-        <div className="flex items-center justify-center p-6 md:p-10">
-          <Card className="w-full max-w-md border-white/10 bg-[#0F0F0D] p-6">
+        <div className="flex items-center justify-center p-4 sm:p-6 md:p-10">
+          <Card className="w-full max-w-md border-white/10 bg-[#0F0F0D] p-4 sm:p-6">
             <div className="mb-6">
               <p className="text-xs uppercase tracking-[0.18em] text-[#B7AEA2]">Access</p>
               <h2 className="mt-2 text-2xl font-semibold text-[#F5F0E6]">Merchant login</h2>
             </div>
 
-            <div className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm text-[#D5CFC4]">Email</label>
+                <label htmlFor="email" className="mb-2 block text-sm text-[#D5CFC4]">Email</label>
                 <input
-                  className="w-full rounded-md border border-white/10 bg-[#121210] px-3 py-2.5 text-[#F5F0E6] outline-none placeholder:text-[#7E786F]"
-                  defaultValue="aarav@northwindstudio.in"
+                  id="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  autoComplete="email"
+                  className="w-full rounded-md border border-white/10 bg-[#121210] px-3 py-2.5 text-[#F5F0E6] outline-none placeholder:text-[#7E786F] focus:border-[#D7A455]/60"
+                  placeholder="merchant@company.com"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm text-[#D5CFC4]">Password</label>
-                <input
-                  type="password"
-                  className="w-full rounded-md border border-white/10 bg-[#121210] px-3 py-2.5 text-[#F5F0E6] outline-none placeholder:text-[#7E786F]"
-                  defaultValue="demo123"
-                />
+                <label htmlFor="password" className="mb-2 block text-sm text-[#D5CFC4]">Password</label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete="current-password"
+                    className="w-full rounded-md border border-white/10 bg-[#121210] px-3 py-2.5 pr-11 text-[#F5F0E6] outline-none placeholder:text-[#7E786F] focus:border-[#D7A455]/60"
+                    placeholder="Enter your password"
+                  />
+                  <button
+                    type="button"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((current) => !current)}
+                    className="absolute inset-y-0 right-3 flex items-center text-[#B7AEA2] transition hover:text-[#F5F0E6]"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
 
-              <Link href="/dashboard">
-                <Button className="mt-2 w-full" size="lg">
-                  Sign in <ArrowRight className="ml-2" size={16} />
-                </Button>
-              </Link>
-            </div>
+              <div className="flex items-center justify-between gap-3 text-sm text-[#B7AEA2]">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(event) => setRememberMe(event.target.checked)}
+                    className="h-4 w-4 rounded border-white/10 bg-[#121210] accent-[#D7A455]"
+                  />
+                  Remember me
+                </label>
+
+                <button type="button" className="font-medium text-[#D7A455] hover:text-[#F3C77F]">
+                  Forgot password?
+                </button>
+              </div>
+
+              {error ? (
+                <div className="rounded-md border border-[#E26B5B]/30 bg-[#E26B5B]/10 px-3 py-2 text-sm text-[#F7B0A5]">
+                  {error}
+                </div>
+              ) : null}
+
+              <Button type="submit" className="mt-2 w-full" size="lg">
+                Sign in <ArrowRight className="ml-2" size={16} />
+              </Button>
+
+              {rememberMe ? (
+                <p className="text-xs text-[#7E786F]">Session remains active in this browser for the demo environment.</p>
+              ) : null}
+            </form>
 
             <div className="mt-6 border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-sm text-[#B7AEA2]">Demo merchant</span>
                 <Link href="/dashboard" className="text-sm font-medium text-[#D7A455]">
                   Open demo environment

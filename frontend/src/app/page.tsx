@@ -1,8 +1,7 @@
+import { redirect } from "next/navigation";
+
 export default function Home() {
-  return (
-    <main>
-      <h1>AI Revenue Recovery</h1>
-      <p>Merchant revenue recovery platform</p>
-    </main>
-  );
+  redirect("/login");
+
+  return null;
 }

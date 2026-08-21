@@ -2,9 +2,10 @@
 
 import { Bell, Menu, Search, ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
+import { getDemoAuthState, isProtectedPath } from "@/lib/auth";
 import { merchant } from "@/lib/mock-data/mock-data";
 
 const navigation = [
@@ -37,8 +38,25 @@ function getPageTitle(pathname: string) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const pageTitle = getPageTitle(pathname);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+
+  useEffect(() => {
+    const auth = getDemoAuthState();
+
+    if (pathname === "/login") {
+      if (auth.isAuthenticated) {
+        router.replace("/dashboard");
+      }
+      return;
+    }
+
+    if (isProtectedPath(pathname) && !auth.isAuthenticated) {
+      router.replace("/login");
+      return;
+    }
+  }, [pathname, router]);
 
   useEffect(() => {
     const originalOverflow = document.body.style.overflow;

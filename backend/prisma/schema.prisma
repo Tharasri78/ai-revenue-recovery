@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -10,4 +5,283 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum MerchantStatus {
+  ACTIVE
+  SUSPENDED
+  INACTIVE
+}
+
+enum UserStatus {
+  ACTIVE
+  INVITED
+  SUSPENDED
+  INACTIVE
+}
+
+enum TransactionStatus {
+  SUCCESSFUL
+  FAILED
+  ABANDONED
+  RECOVERY_ATTEMPTED
+  RECOVERED
+}
+
+enum PaymentMethod {
+  UPI
+  CARD
+  NET_BANKING
+  WALLET
+  EMI
+  OTHER
+}
+
+enum RecoveryStatus {
+  NONE
+  PENDING
+  RECOMMENDED
+  AWAITING_APPROVAL
+  APPROVED
+  IN_PROGRESS
+  RECOVERED
+  FAILED
+  REJECTED
+  EXPIRED
+}
+
+enum RecoveryAction {
+  RETRY_PAYMENT
+  SEND_RECOVERY_LINK
+  OFFER_ALTERNATIVE_PAYMENT
+  CUSTOMER_NOTIFICATION
+  APPLY_DISCOUNT
+  MANUAL_REVIEW
+  OTHER
+}
+
+enum RecoveryOutcome {
+  PENDING
+  SUCCESS
+  FAILED
+  BLOCKED
+  REJECTED
+  EXPIRED
+}
+
+enum PolicyStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum RecoveryMode {
+  MANUAL
+  ASSISTED
+  AUTONOMOUS
+}
+
+enum ExperimentStatus {
+  DRAFT
+  RUNNING
+  PAUSED
+  COMPLETED
+  CANCELLED
+}
+
+enum AuditEntityType {
+  MERCHANT
+  USER
+  TRANSACTION
+  RECOVERY_CASE
+  RECOVERY_ATTEMPT
+  POLICY
+  EXPERIMENT
+  OTHER
+}
+
+model Merchant {
+  id            String         @id @default(uuid()) @db.Uuid
+  businessName  String
+  businessEmail String
+  status        MerchantStatus @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  users         User[]
+  transactions  Transaction[]
+  recoveryCases RecoveryCase[]
+  policies      RecoveryPolicy[]
+  experiments   Experiment[]
+  auditLogs     AuditLog[]
+
+  @@index([businessEmail])
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique
+  description String?
+  users       User[]
+  permissions RolePermission[]
+}
+
+model Permission {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @unique
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+}
+
+model User {
+  id           String     @id @default(uuid()) @db.Uuid
+  merchantId   String     @db.Uuid
+  roleId       String     @db.Uuid
+  email        String
+  passwordHash String
+  name         String
+  status       UserStatus @default(INVITED)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  merchant  Merchant   @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  role      Role       @relation(fields: [roleId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  auditLogs AuditLog[]
+
+  @@unique([merchantId, email])
+  @@index([merchantId])
+  @@index([roleId])
+}
+
+model Transaction {
+  id                String            @id @default(uuid()) @db.Uuid
+  merchantId        String            @db.Uuid
+  externalReference String?
+  customerReference String?
+  customerName      String?
+  customerEmail     String?
+  amount            Decimal           @db.Decimal(18, 2)
+  currency          String            @db.VarChar(3)
+  paymentStatus     TransactionStatus @default(FAILED)
+  paymentMethod     PaymentMethod
+  failureReason     String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  merchant     Merchant      @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  recoveryCase RecoveryCase?
+
+  @@unique([merchantId, externalReference])
+  @@index([merchantId])
+  @@index([merchantId, paymentStatus])
+  @@index([merchantId, createdAt])
+}
+
+model RecoveryCase {
+  id                   String          @id @default(uuid()) @db.Uuid
+  merchantId           String          @db.Uuid
+  transactionId        String          @unique @db.Uuid
+  status               RecoveryStatus  @default(PENDING)
+  // Probabilities are stored as decimal values from 0.0000 through 1.0000.
+  recoveryScore        Decimal?        @db.Decimal(5, 4)
+  confidence           Decimal?        @db.Decimal(5, 4)
+  recoverableAmount    Decimal?        @db.Decimal(18, 2)
+  selectedAction       RecoveryAction?
+  outcome              RecoveryOutcome @default(PENDING)
+  recommendationReason String?
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
+
+  merchant    Merchant          @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  transaction Transaction       @relation(fields: [transactionId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  attempts    RecoveryAttempt[]
+
+  @@index([merchantId])
+  @@index([merchantId, status])
+  @@index([merchantId, recoveryScore])
+  @@index([transactionId])
+}
+
+model RecoveryAttempt {
+  id             String          @id @default(uuid()) @db.Uuid
+  recoveryCaseId String          @db.Uuid
+  action         RecoveryAction
+  attemptNumber  Int
+  amount         Decimal?        @db.Decimal(18, 2)
+  outcome        RecoveryOutcome @default(PENDING)
+  failureReason  String?
+  attemptedAt    DateTime        @default(now())
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  recoveryCase RecoveryCase @relation(fields: [recoveryCaseId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([recoveryCaseId, attemptNumber])
+  @@index([recoveryCaseId])
+  @@index([outcome])
+}
+
+model RecoveryPolicy {
+  id            String       @id @default(uuid()) @db.Uuid
+  merchantId    String       @db.Uuid
+  name          String
+  description   String?
+  status        PolicyStatus @default(ACTIVE)
+  mode          RecoveryMode @default(ASSISTED)
+  configuration Json
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([merchantId, name])
+  @@index([merchantId])
+  @@index([merchantId, status])
+}
+
+model Experiment {
+  id            String           @id @default(uuid()) @db.Uuid
+  merchantId    String           @db.Uuid
+  name          String
+  description   String?
+  status        ExperimentStatus @default(DRAFT)
+  configuration Json
+  startsAt      DateTime?
+  endsAt        DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([merchantId, name])
+  @@index([merchantId])
+  @@index([merchantId, status])
+}
+
+model AuditLog {
+  id         String          @id @default(uuid()) @db.Uuid
+  merchantId String          @db.Uuid
+  userId     String?         @db.Uuid
+  action     String
+  entityType AuditEntityType
+  entityId   String?
+  metadata   Json?
+  createdAt  DateTime        @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  @@index([merchantId])
+  @@index([merchantId, createdAt])
+  @@index([userId])
+  @@index([entityType, entityId])
 }

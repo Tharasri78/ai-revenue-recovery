@@ -1,26 +1,51 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-bg: #0b0b0a;
+  --color-surface: #121210;
+  --color-surface-strong: #171613;
+  --color-card: #141311;
+  --color-border: rgba(214, 208, 197, 0.14);
+  --color-text: #f5f0e6;
+  --color-text-muted: #b7aea2;
+  --color-text-soft: #79756d;
+  --color-amber: #d7a455;
+  --color-amber-soft: rgba(215, 164, 85, 0.12);
+  --color-green: #4ab58d;
+  --color-red: #c65d57;
+  --color-warn: #e0b95b;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
+  background: var(--color-bg);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-geist-sans), Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(215, 164, 85, 0.3);
+}
+
+@layer utilities {
+  .panel {
+    @apply border border-white/10 bg-[#121210] shadow-[0_0_0_1px_rgba(255,255,255,0.02)];
+  }
+
+  .muted {
+    @apply text-[#b7aea2];
+  }
+
+  .soft-divider {
+    @apply border-t border-white/10;
+  }
 }

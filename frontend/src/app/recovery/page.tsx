@@ -1,10 +1,29 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { RecoveryCaseCard } from "@/components/recovery/RecoveryCaseCard";
 import { Card } from "@/components/ui/Card";
 import { getRecoveryCases } from "@/services/recovery";
+import type { ApiRecoveryCase, PaginatedResponse } from "@/types/backend";
+import { ApiError } from "@/lib/api";
 
-export default async function RecoveryPage() {
-  const cases = await getRecoveryCases();
+export default function RecoveryPage() {
+  const router = useRouter();
+  const [result, setResult] = useState<PaginatedResponse<ApiRecoveryCase> | null>(null);
+  const [status, setStatus] = useState<string | undefined>();
+  const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    setResult(null);
+    setError("");
+    getRecoveryCases({ status }).then(setResult).catch((cause) => {
+      if (cause instanceof ApiError && cause.status === 401) router.replace("/login");
+      setError(cause instanceof Error ? cause.message : "Unable to load recovery cases.");
+    });
+  }, [reloadKey, router, status]);
 
   return (
     <AppShell>
@@ -15,18 +34,22 @@ export default async function RecoveryPage() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          {['Recommended', 'Awaiting approval', 'Completed'].map((tab) => (
-            <button key={tab} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-sm text-[#F5F0E6]">
+          {['All', 'RECOMMENDED', 'AWAITING_APPROVAL', 'RECOVERED'].map((tab) => (
+            <button type="button" key={tab} onClick={() => setStatus(tab === "All" ? undefined : tab)} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-sm text-[#F5F0E6]">
               {tab}
             </button>
           ))}
         </div>
 
         <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {cases.map((caseItem) => (
-            <RecoveryCaseCard key={caseItem.id} caseItem={caseItem} />
+          {result?.items.map((caseItem) => (
+            <RecoveryCaseCard key={caseItem.id} caseItem={caseItem} onUpdated={() => setReloadKey((current) => current + 1)} />
           ))}
         </div>
+
+        {error ? <div className="rounded-md border border-[#E26B5B]/30 bg-[#E26B5B]/10 px-3 py-2 text-sm text-[#F7B0A5]">{error}</div> : null}
+        {!result && !error ? <Card className="p-5 text-sm text-[#B7AEA2]">Loading recovery cases...</Card> : null}
+        {result?.items.length === 0 ? <Card className="p-5 text-sm text-[#B7AEA2]">No recovery cases found.</Card> : null}
 
         <Card title="Operational guardrails" className="p-5">
           <p className="text-sm text-[#B7AEA2]">

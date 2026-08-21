@@ -2,10 +2,10 @@ import Link from "next/link";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatCurrency } from "@/lib/utils";
-import type { Transaction } from "@/lib/mock-data/types";
+import type { ApiTransaction } from "@/types/backend";
 
 interface TransactionTableProps {
-  items: Transaction[];
+  items: ApiTransaction[];
 }
 
 export function TransactionTable({ items }: TransactionTableProps) {
@@ -15,12 +15,12 @@ export function TransactionTable({ items }: TransactionTableProps) {
         {item.id}
       </Link>
     ),
-    customer: item.customerName,
-    amount: formatCurrency(item.amount),
-    method: item.paymentMethod,
-    status: <StatusBadge status={item.status} />,
-    reason: item.failureReason,
-    recovery: item.recoveryStatus,
+    customer: item.customerName ?? item.customerEmail ?? "Unknown customer",
+    amount: formatCurrency(Number(item.amount)),
+    method: item.paymentMethod.replaceAll("_", " "),
+    status: <StatusBadge status={item.paymentStatus.replaceAll("_", " ")} />,
+    reason: item.failureReason ?? "-",
+    recovery: item.recoveryCase?.status?.replaceAll("_", " ") ?? "None",
     date: new Date(item.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
   }));
 

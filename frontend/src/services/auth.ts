@@ -1,78 +1,31 @@
 import {
   clearDemoAuthSession,
   getDemoAuthSession,
+  setAuthToken,
   setDemoAuthSession,
   type DemoAuthSession,
 } from "@/lib/auth";
+import { apiRequest } from "@/lib/api";
 import type { AuthSession, LoginCredentials, OnboardingPayload, SignupPayload } from "@/types/auth";
 
-function generateUserId(prefix: string) {
-  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function validateEmail(email: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function buildSessionFromEmail(email: string, role: AuthSession["role"]): DemoAuthSession {
-  const normalizedEmail = email.trim();
-
-  return {
-    userId: generateUserId(role.toLowerCase()),
-    email: normalizedEmail,
-    role,
-    merchantId: role === "MERCHANT" ? `merchant_${Math.random().toString(36).slice(2, 8)}` : null,
-    merchantName: role === "MERCHANT" ? "Northwind Studio" : null,
-    isAuthenticated: true,
-    onboardingComplete: role === "MERCHANT",
-    createdAt: new Date().toISOString(),
-  };
+interface BackendUser { id: string; email: string; role: string; merchantId: string }
+interface BackendMerchant { id: string; businessName: string; businessEmail: string }
+function toSession(user: BackendUser, merchant: BackendMerchant): DemoAuthSession {
+  return { userId: user.id, email: user.email, role: user.role as AuthSession["role"], merchantId: merchant.id, merchantName: merchant.businessName, isAuthenticated: true, onboardingComplete: true, createdAt: new Date().toISOString() };
 }
 
 export async function authLogin(credentials: LoginCredentials): Promise<AuthSession> {
-  const email = credentials.email.trim();
-  const password = credentials.password.trim();
-
-  if (!validateEmail(email)) {
-    throw new Error("Enter a valid merchant email address.");
-  }
-
-  if (password.length < 8) {
-    throw new Error("Password must be at least 8 characters long.");
-  }
-
-  const session = buildSessionFromEmail(email, "MERCHANT");
+  const response = await apiRequest<{ accessToken: string; user: BackendUser; merchant: BackendMerchant }>("/auth/login", { method: "POST", body: JSON.stringify({ email: credentials.email.trim(), password: credentials.password }) });
+  const session = toSession(response.user, response.merchant);
+  setAuthToken(response.accessToken, credentials.rememberMe ?? true);
   setDemoAuthSession(session, credentials.rememberMe ?? true);
   return session;
 }
 
 export async function authRegister(payload: SignupPayload): Promise<AuthSession> {
-  const businessName = payload.businessName.trim();
-  const businessEmail = payload.businessEmail.trim();
-
-  if (!businessName) {
-    throw new Error("Business name is required.");
-  }
-
-  if (!validateEmail(businessEmail)) {
-    throw new Error("Enter a valid business email address.");
-  }
-
-  if (payload.password.length < 8) {
-    throw new Error("Password must be at least 8 characters long.");
-  }
-
-  if (payload.password !== payload.confirmPassword) {
-    throw new Error("Passwords do not match.");
-  }
-
-  const session = {
-    ...buildSessionFromEmail(businessEmail, "MERCHANT"),
-    merchantName: businessName,
-  };
-
-  setDemoAuthSession(session, true);
-  return session;
+  if (payload.password !== payload.confirmPassword) throw new Error("Passwords do not match.");
+  await apiRequest("/auth/signup", { method: "POST", body: JSON.stringify({ businessName: payload.businessName.trim(), businessEmail: payload.businessEmail.trim(), name: payload.businessName.trim(), email: payload.businessEmail.trim(), password: payload.password }) });
+  return authLogin({ email: payload.businessEmail, password: payload.password, rememberMe: true });
 }
 
 export async function authLogout(): Promise<void> {
@@ -80,14 +33,21 @@ export async function authLogout(): Promise<void> {
 }
 
 export async function authGetCurrentUser(): Promise<AuthSession | null> {
-  return getDemoAuthSession();
+  const current = getDemoAuthSession();
+  if (!current) return null;
+  try {
+    const response = await apiRequest<{ user: BackendUser; merchant: BackendMerchant }>("/auth/me");
+    const session = toSession(response.user, response.merchant);
+    setDemoAuthSession(session, true);
+    return session;
+  } catch { return null; }
 }
 
 export async function authVerifyEmail(email: string): Promise<{ verified: boolean; email: string }> {
   const normalized = email.trim();
 
   return {
-    verified: validateEmail(normalized),
+    verified: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized),
     email: normalized,
   };
 }

@@ -1,27 +1,40 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { DataTable } from "@/components/ui/DataTable";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { formatCurrency } from "@/lib/utils";
 import { getTransactions } from "@/services/transactions";
+import type { ApiTransaction, PaginatedResponse } from "@/types/backend";
+import { ApiError } from "@/lib/api";
 
-export default async function RevenueAtRiskPage() {
-  const transactions = await getTransactions();
-  const atRisk = transactions.filter((txn) => txn.isRecoverable);
+export default function RevenueAtRiskPage() {
+  const router = useRouter();
+  const [result, setResult] = useState<PaginatedResponse<ApiTransaction> | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    getTransactions({ status: "FAILED", limit: 100 }).then(setResult).catch((cause) => {
+      if (cause instanceof ApiError && cause.status === 401) router.replace("/login");
+      setError(cause instanceof Error ? cause.message : "Unable to load revenue at risk.");
+    });
+  }, [router]);
 
-  const rows = atRisk.map((txn) => ({
+  const rows = (result?.items ?? []).map((txn) => ({
     id: (
       <Link href={`/transactions/${txn.id}`} className="font-medium text-[#F5F0E6] hover:text-[#D7A455]">
         {txn.id}
       </Link>
     ),
-    customer: txn.customerName,
-    amount: formatCurrency(txn.amount),
-    reason: txn.failureReason,
-    probability: `${txn.recoveryProbability}%`,
-    action: txn.recommendedAction,
-    status: <StatusBadge status={txn.policyResult === "Approved" ? "Approved" : txn.policyResult === "Needs review" ? "Needs review" : "Blocked"} />,
+    customer: txn.customerName ?? txn.customerEmail ?? "Unknown customer",
+    amount: formatCurrency(Number(txn.amount)),
+    reason: txn.failureReason ?? "-",
+    probability: "-",
+    action: "Pending decision",
+    status: <StatusBadge status={txn.paymentStatus.replaceAll("_", " ")} />,
     created: new Date(txn.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }),
   }));
 
@@ -59,7 +72,10 @@ export default async function RevenueAtRiskPage() {
           </div>
         </Card>
 
-        <DataTable
+        {error ? <div className="rounded-md border border-[#E26B5B]/30 bg-[#E26B5B]/10 px-3 py-2 text-sm text-[#F7B0A5]">{error}</div> : null}
+        {!result && !error ? <Card className="p-5 text-sm text-[#B7AEA2]">Loading revenue at risk...</Card> : null}
+        {result?.items.length === 0 ? <Card className="p-5 text-sm text-[#B7AEA2]">No at-risk transactions found.</Card> : null}
+        {result && rows.length > 0 ? <DataTable
           columns={[
             { key: "id", label: "Transaction ID" },
             { key: "customer", label: "Customer" },
@@ -71,7 +87,7 @@ export default async function RevenueAtRiskPage() {
             { key: "created", label: "Created" },
           ]}
           rows={rows}
-        />
+        /> : null}
       </div>
     </AppShell>
   );

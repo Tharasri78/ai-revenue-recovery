@@ -1,6 +1,7 @@
 import type { AuthSession, Permission, Role } from "@/types/auth";
 
 export const AUTH_STORAGE_KEY = "ai-revenue-recovery-demo-auth";
+export const AUTH_TOKEN_KEY = "ai-revenue-recovery-access-token";
 
 export type DemoAuthSession = AuthSession & {
   isAuthenticated: boolean;
@@ -13,7 +14,7 @@ export function getDemoAuthSession(): DemoAuthSession | null {
   }
 
   try {
-    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
+    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY) ?? window.sessionStorage.getItem(AUTH_STORAGE_KEY);
 
     if (!raw) {
       return null;
@@ -46,7 +47,22 @@ export function setDemoAuthSession(session: DemoAuthSession, rememberMe = true) 
   }
 
   const storage = rememberMe ? window.localStorage : window.sessionStorage;
+  const otherStorage = rememberMe ? window.sessionStorage : window.localStorage;
+  otherStorage.removeItem(AUTH_STORAGE_KEY);
   storage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+}
+
+export function setAuthToken(token: string, rememberMe = true) {
+  if (typeof window === "undefined") return;
+  const storage = rememberMe ? window.localStorage : window.sessionStorage;
+  const otherStorage = rememberMe ? window.sessionStorage : window.localStorage;
+  otherStorage.removeItem(AUTH_TOKEN_KEY);
+  storage.setItem(AUTH_TOKEN_KEY, token);
+}
+
+export function getAuthToken() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(AUTH_TOKEN_KEY) ?? window.sessionStorage.getItem(AUTH_TOKEN_KEY);
 }
 
 export function clearDemoAuthSession() {
@@ -56,6 +72,8 @@ export function clearDemoAuthSession() {
 
   window.localStorage.removeItem(AUTH_STORAGE_KEY);
   window.sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  window.localStorage.removeItem(AUTH_TOKEN_KEY);
+  window.sessionStorage.removeItem(AUTH_TOKEN_KEY);
 }
 
 export function hasRole(session: AuthSession | null, role: Role) {

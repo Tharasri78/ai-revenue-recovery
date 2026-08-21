@@ -28,7 +28,7 @@ export default async function RevenueAtRiskPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: "Total at risk", value: "₹18.4L" },
             { label: "Potentially recoverable", value: "₹11.2L" },
@@ -44,9 +44,9 @@ export default async function RevenueAtRiskPage() {
 
         <Card className="p-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               {['Date', 'Amount', 'Payment method', 'Failure reason', 'Recovery probability', 'Status'].map((filter) => (
-                <button key={filter} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-xs uppercase tracking-[0.12em] text-[#B7AEA2]">
+                <button key={filter} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-[#B7AEA2] sm:text-xs">
                   {filter}
                 </button>
               ))}
@@ -54,7 +54,7 @@ export default async function RevenueAtRiskPage() {
             <input
               placeholder="Search transaction"
               aria-label="Search transactions"
-              className="w-full max-w-xs rounded-md border border-white/10 bg-[#121210] px-3 py-2 text-sm text-[#F5F0E6] outline-none placeholder:text-[#7E786F] md:w-64"
+              className="w-full rounded-md border border-white/10 bg-[#121210] px-3 py-2 text-sm text-[#F5F0E6] outline-none placeholder:text-[#7E786F] md:max-w-xs"
             />
           </div>
         </Card>

@@ -22,9 +22,9 @@ export default async function AuditLogsPage() {
     <AppShell>
       <div className="space-y-6">
         <Card className="p-4">
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {['Transaction', 'Event', 'Date', 'Outcome'].map((filter) => (
-              <button key={filter} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-xs uppercase tracking-[0.12em] text-[#B7AEA2]">
+              <button key={filter} className="rounded-md border border-white/10 bg-[#171613] px-3 py-2 text-[10px] uppercase tracking-[0.12em] text-[#B7AEA2] sm:text-xs">
                 {filter}
               </button>
             ))}

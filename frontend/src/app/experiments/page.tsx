@@ -17,7 +17,7 @@ export default async function ExperimentsPage() {
           <Button variant="primary">Run simulation</Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {[
             { label: "Transactions tested", value: "5,000" },
             { label: "Baseline recovered", value: "₹1.82L" },

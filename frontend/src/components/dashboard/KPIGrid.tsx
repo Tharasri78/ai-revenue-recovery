@@ -8,9 +8,9 @@ interface KPIGridProps {
 
 export function KPIGrid({ items }: KPIGridProps) {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
-        <Card key={item.label} className={cn("min-h-[160px] p-5") }>
+        <Card key={item.label} className={cn("min-h-[160px] min-w-0 p-5") }>
           <p className="text-sm text-[#B7AEA2]">{item.label}</p>
           <div className="mt-3 flex items-end justify-between gap-3">
             <div className="text-3xl font-semibold tracking-tight text-[#F5F0E6]">{item.value}</div>

@@ -28,7 +28,7 @@ export default async function TransactionDetailPage({ params }: { params: Promis
           <StatusBadge status={transaction.status} />
         </div>
 
-        <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+        <div className="grid min-w-0 gap-6 lg:grid-cols-[1.3fr_0.7fr]">
           <div className="space-y-6">
             <Card title="Payment information" className="space-y-3">
               <div className="grid gap-3 sm:grid-cols-2">

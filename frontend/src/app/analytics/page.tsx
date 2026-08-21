@@ -10,7 +10,7 @@ export default async function AnalyticsPage() {
   return (
     <AppShell>
       <div className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
+        <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
           {[
             { label: "Total revenue at risk", value: "₹18.4L" },
             { label: "Revenue recovered", value: "₹6.72L" },

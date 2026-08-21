@@ -25,6 +25,8 @@ export function TransactionTable({ items }: TransactionTableProps) {
   }));
 
   return (
+    <div className="overflow-x-auto">
+      <div className="min-w-[760px]">
     <DataTable
       columns={[
         { key: "id", label: "Transaction ID" },
@@ -38,5 +40,7 @@ export function TransactionTable({ items }: TransactionTableProps) {
       ]}
       rows={rows}
     />
+      </div>
+    </div>
   );
 }

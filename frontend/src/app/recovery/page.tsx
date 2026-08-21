@@ -22,7 +22,7 @@ export default async function RecoveryPage() {
           ))}
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-3">
+        <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {cases.map((caseItem) => (
             <RecoveryCaseCard key={caseItem.id} caseItem={caseItem} />
           ))}

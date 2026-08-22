@@ -5,7 +5,7 @@ import { RecoveryService } from './recovery.service';
 describe('RecoveryService', () => {
   const prisma = {
     transaction: { findFirst: jest.fn() },
-    recoveryCase: { create: jest.fn(), findFirst: jest.fn(), findMany: jest.fn(), count: jest.fn(), update: jest.fn() },
+    recoveryCase: { create: jest.fn(), findFirst: jest.fn(), findMany: jest.fn(), count: jest.fn(), update: jest.fn(), updateMany: jest.fn() },
     recoveryAttempt: { findFirst: jest.fn(), create: jest.fn(), findMany: jest.fn() },
     $transaction: jest.fn(),
   };
@@ -50,5 +50,25 @@ describe('RecoveryService', () => {
 
     await service.createAttempt('merchant-a', 'case-a', { action: 'RETRY_PAYMENT' });
     expect(prisma.$transaction).toHaveBeenCalled();
+  });
+
+  it('does not allow updates to move a case to another transaction', async () => {
+    prisma.recoveryCase.updateMany.mockResolvedValue({ count: 1 });
+    prisma.recoveryCase.findFirst.mockResolvedValue({
+      id: 'case-a',
+      merchantId: 'merchant-a',
+      transactionId: 'txn-a',
+      status: 'APPROVED',
+    });
+
+    await service.update('merchant-a', 'case-a', {
+      transactionId: 'txn-b',
+      status: 'APPROVED',
+    });
+
+    expect(prisma.recoveryCase.updateMany).toHaveBeenCalledWith({
+      where: { id: 'case-a', merchantId: 'merchant-a' },
+      data: { status: 'APPROVED' },
+    });
   });
 });

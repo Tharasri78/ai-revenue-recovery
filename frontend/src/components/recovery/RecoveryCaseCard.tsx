@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -15,9 +16,20 @@ interface RecoveryCaseCardProps {
 }
 
 export function RecoveryCaseCard({ caseItem, onUpdated }: RecoveryCaseCardProps) {
+  const [error, setError] = useState("");
+  const [updatingStatus, setUpdatingStatus] = useState<"APPROVED" | "REJECTED" | null>(null);
+
   async function updateStatus(status: "APPROVED" | "REJECTED") {
-    await updateRecoveryCase(caseItem.id, { status });
-    onUpdated?.();
+    setError("");
+    setUpdatingStatus(status);
+    try {
+      await updateRecoveryCase(caseItem.id, { status });
+      onUpdated?.();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Unable to update recovery case.");
+    } finally {
+      setUpdatingStatus(null);
+    }
   }
 
   return (
@@ -56,12 +68,14 @@ export function RecoveryCaseCard({ caseItem, onUpdated }: RecoveryCaseCardProps)
         </div>
       </div>
 
+      {error ? <div className="rounded-md border border-[#E26B5B]/30 bg-[#E26B5B]/10 px-3 py-2 text-sm text-[#F7B0A5]">{error}</div> : null}
+
       <div className="flex flex-wrap gap-2 pt-2">
-        <Link href={`/transactions/${caseItem.transactionId}`}>
-          <Button variant="secondary" size="sm">Review</Button>
+        <Link href={`/recovery/${caseItem.id}`}>
+          <Button variant="secondary" size="sm">Open case</Button>
         </Link>
-        <Button variant="primary" size="sm" onClick={() => updateStatus("APPROVED")}>Approve</Button>
-        <Button variant="ghost" size="sm" onClick={() => updateStatus("REJECTED")}>Reject</Button>
+        <Button variant="primary" size="sm" disabled={updatingStatus !== null} onClick={() => updateStatus("APPROVED")}>{updatingStatus === "APPROVED" ? "Approving..." : "Approve"}</Button>
+        <Button variant="ghost" size="sm" disabled={updatingStatus !== null} onClick={() => updateStatus("REJECTED")}>{updatingStatus === "REJECTED" ? "Rejecting..." : "Reject"}</Button>
       </div>
     </Card>
   );

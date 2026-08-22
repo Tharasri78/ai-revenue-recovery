@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
 import { RecoveryCaseCard } from "@/components/recovery/RecoveryCaseCard";
 import { Card } from "@/components/ui/Card";
-import { getRecoveryCases } from "@/services/recovery";
+import { createRecoveryCase, getRecoveryCases } from "@/services/recovery";
 import type { ApiRecoveryCase, PaginatedResponse } from "@/types/backend";
 import { ApiError } from "@/lib/api";
 
@@ -14,6 +14,8 @@ export default function RecoveryPage() {
   const [result, setResult] = useState<PaginatedResponse<ApiRecoveryCase> | null>(null);
   const [status, setStatus] = useState<string | undefined>();
   const [error, setError] = useState("");
+  const [transactionId, setTransactionId] = useState("");
+  const [creating, setCreating] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
@@ -24,6 +26,31 @@ export default function RecoveryPage() {
       setError(cause instanceof Error ? cause.message : "Unable to load recovery cases.");
     });
   }, [reloadKey, router, status]);
+
+  async function handleCreateCase(event: React.FormEvent) {
+    event.preventDefault();
+    setError("");
+
+    if (!transactionId.trim()) {
+      setError("Transaction ID is required.");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      await createRecoveryCase({ transactionId: transactionId.trim() });
+      setTransactionId("");
+      setReloadKey((current) => current + 1);
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.status === 401) {
+        router.replace("/login");
+        return;
+      }
+      setError(cause instanceof Error ? cause.message : "Unable to create recovery case.");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   return (
     <AppShell>
@@ -40,6 +67,27 @@ export default function RecoveryPage() {
             </button>
           ))}
         </div>
+
+        <Card title="Create recovery case" className="p-5">
+          <form onSubmit={handleCreateCase} className="flex flex-col gap-3 md:flex-row md:items-end">
+            <div className="min-w-0 flex-1">
+              <label className="mb-1 block text-sm text-[#B7AEA2]">Transaction ID</label>
+              <input
+                value={transactionId}
+                onChange={(event) => setTransactionId(event.target.value)}
+                placeholder="Paste the failed transaction UUID"
+                className="w-full rounded-md border border-white/10 bg-[#171613] px-3 py-3 text-sm text-[#F5F0E6] outline-none placeholder:text-[#7E786F]"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={creating}
+              className="rounded-md bg-[#E4AD52] px-5 py-3 text-sm font-medium text-black transition hover:bg-[#efbb65] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {creating ? "Creating..." : "Create case"}
+            </button>
+          </form>
+        </Card>
 
         <div className="grid min-w-0 gap-5 md:grid-cols-2 xl:grid-cols-3">
           {result?.items.map((caseItem) => (

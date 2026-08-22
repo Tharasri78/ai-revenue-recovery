@@ -41,7 +41,8 @@ export class RecoveryService {
   }
 
   async update(merchantId: string, id: string, dto: UpdateRecoveryDto) {
-    const result = await this.prisma.recoveryCase.updateMany({ where: withMerchantScope({ id }, merchantId), data: dto });
+    const { transactionId: _transactionId, ...caseData } = dto;
+    const result = await this.prisma.recoveryCase.updateMany({ where: withMerchantScope({ id }, merchantId), data: caseData });
     if (result.count === 0) throw new NotFoundException('Recovery case not found');
     return this.findOne(merchantId, id);
   }

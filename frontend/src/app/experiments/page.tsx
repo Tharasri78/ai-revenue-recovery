@@ -1,10 +1,8 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
-import { getAnalyticsData } from "@/services/analytics";
 
 export default async function ExperimentsPage() {
-  const analytics = await getAnalyticsData();
 
   return (
     <AppShell>

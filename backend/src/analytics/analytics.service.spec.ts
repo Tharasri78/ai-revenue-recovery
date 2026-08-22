@@ -77,5 +77,6 @@ describe('AnalyticsService', () => {
       { name: 'Temporary failure', value: 50 },
       { name: 'Abandoned checkout', value: 50 },
     ]);
+    expect(result.recoveryOutcomes).toEqual([{ label: 'SUCCESS', value: 1 }]);
   });
 });

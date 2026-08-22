@@ -76,6 +76,9 @@ export class AnalyticsService {
         { label: 'Successfully recovered', value: revenueRecovered },
       ],
       recoveryReasons: this.getFailureReasonShare(transactions),
+      paymentMethods: this.getPaymentMethodShare(transactions),
+      recoveryStrategies: this.getRecoveryStrategyShare(attempts),
+      recoveryOutcomes: this.getRecoveryOutcomeDistribution(attempts),
       recoveryActivity: recoveryCases
         .slice()
         .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime())
@@ -167,6 +170,58 @@ export class AnalyticsService {
       .map(([name, count]) => ({ name, value: Math.round((count / total) * 100) }))
       .sort((a, b) => b.value - a.value)
       .slice(0, 5);
+  }
+
+  private getPaymentMethodShare(transactions: DashboardTransaction[]) {
+    const atRisk = transactions.filter((t) => ['FAILED', 'ABANDONED'].includes(t.paymentStatus));
+    const total = atRisk.length;
+    if (total === 0) return [];
+    const counts = new Map<string, number>();
+    for (const t of atRisk) {
+      const method = String(t.paymentMethod).replace(/_/g, ' ');
+      counts.set(method, (counts.get(method) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([name, count]) => ({ name, value: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  private getRecoveryStrategyShare(attempts: Array<{ action: string }>) {
+    const total = attempts.length;
+    if (total === 0) return [];
+    const counts = new Map<string, number>();
+    for (const attempt of attempts) {
+      const label = attempt.action.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+      counts.set(label, (counts.get(label) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .map(([strategy, count]) => ({ strategy, value: Math.round((count / total) * 100) }))
+      .sort((a, b) => b.value - a.value);
+  }
+
+  private getRecoveryOutcomeDistribution(attempts: Array<{ outcome: string }>) {
+    const counts = new Map<string, number>();
+    for (const attempt of attempts) {
+      counts.set(attempt.outcome, (counts.get(attempt.outcome) ?? 0) + 1);
+    }
+
+    const preferredOrder = ['PENDING', 'SUCCESS', 'FAILED', 'BLOCKED', 'REJECTED', 'EXPIRED'];
+    const distribution: Array<{ label: string; value: number }> = [];
+
+    for (const outcome of preferredOrder) {
+      const count = counts.get(outcome) ?? 0;
+      if (count > 0) {
+        distribution.push({ label: outcome, value: count });
+        counts.delete(outcome);
+      }
+    }
+
+    return distribution.concat(
+      Array.from(counts.entries())
+        .filter(([, count]) => count > 0)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([outcome, count]) => ({ label: outcome, value: count })),
+    );
   }
 
   private sumAmounts(items: Array<{ amount: unknown }>) {

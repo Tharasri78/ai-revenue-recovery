@@ -1,6 +1,7 @@
 import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { Prisma } from '../../generated/prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditLogsService } from '../audit-logs/audit-logs.service';
 import { withMerchantScope } from '../auth/merchant-scope';
 import { CreateRecoveryAttemptDto } from './dto/create-recovery-attempt.dto';
 import { CreateRecoveryDto } from './dto/create-recovery.dto';
@@ -9,7 +10,10 @@ import { UpdateRecoveryDto } from './dto/update-recovery.dto';
 
 @Injectable()
 export class RecoveryService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditLogsService: AuditLogsService,
+  ) {}
 
   async create(merchantId: string, transactionId: string, dto: CreateRecoveryDto) {
     const transaction = await this.prisma.transaction.findFirst({ where: withMerchantScope({ id: transactionId }, merchantId), select: { id: true, paymentStatus: true } });
@@ -17,7 +21,15 @@ export class RecoveryService {
     if (!['FAILED', 'ABANDONED'].includes(transaction.paymentStatus)) throw new ConflictException('Only failed or abandoned transactions can receive recovery cases');
     try {
       const { transactionId: _transactionId, ...caseData } = dto;
-      return await this.prisma.recoveryCase.create({ data: { ...caseData, merchantId, transactionId } });
+      const created = await this.prisma.recoveryCase.create({ data: { ...caseData, merchantId, transactionId } });
+      await this.auditLogsService.recordLog({
+        merchantId,
+        action: 'CREATE_RECOVERY_CASE',
+        entityType: 'RECOVERY_CASE',
+        entityId: created.id,
+        metadata: { transactionId },
+      });
+      return created;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ConflictException('A recovery case already exists for this transaction');
       throw error;
@@ -51,11 +63,19 @@ export class RecoveryService {
     const recoveryCase = await this.prisma.recoveryCase.findFirst({ where: withMerchantScope({ id: recoveryCaseId }, merchantId), select: { id: true } });
     if (!recoveryCase) throw new NotFoundException('Recovery case not found');
     try {
-      return await this.prisma.$transaction(async (tx) => {
+      const attempt = await this.prisma.$transaction(async (tx) => {
         const latest = await tx.recoveryAttempt.findFirst({ where: { recoveryCaseId, recoveryCase: { merchantId } }, orderBy: { attemptNumber: 'desc' }, select: { attemptNumber: true } });
         const attemptNumber = dto.attemptNumber ?? (latest?.attemptNumber ?? 0) + 1;
         return tx.recoveryAttempt.create({ data: { recoveryCaseId, action: dto.action, attemptNumber, amount: dto.amount, outcome: dto.outcome, failureReason: dto.failureReason } });
       });
+      await this.auditLogsService.recordLog({
+        merchantId,
+        action: `RECOVERY_ATTEMPT_${attempt.action}`,
+        entityType: 'RECOVERY_ATTEMPT',
+        entityId: attempt.id,
+        metadata: { recoveryCaseId, action: attempt.action, outcome: attempt.outcome },
+      });
+      return attempt;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') throw new ConflictException('This recovery attempt number already exists');
       throw error;

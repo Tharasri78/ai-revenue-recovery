@@ -48,6 +48,7 @@ export class TransactionsService {
         skip,
         take: query.limit,
         orderBy: { [query.sortBy]: query.sortOrder },
+        include: { recoveryCase: { include: { attempts: true } } },
       }),
       this.prisma.transaction.count({ where }),
     ]);

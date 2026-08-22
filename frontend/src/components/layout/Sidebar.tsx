@@ -3,9 +3,8 @@
 import { BarChart3, FileText, Gauge, LogOut, ShieldCheck, Sparkles, WalletCards } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { clearDemoAuthSession } from "@/lib/auth";
+import { clearDemoAuthSession, getDemoAuthSession } from "@/lib/auth";
 import { cn } from "@/lib/utils";
-import { merchant } from "@/lib/mock-data/mock-data";
 
 interface SidebarProps {
   navItems: Array<{ href: string; label: string }>;
@@ -30,6 +29,9 @@ const icons = {
 
 export function Sidebar({ navItems, activePath, mobile = false, open = true, onNavigate, onClose }: SidebarProps) {
   const router = useRouter();
+  const session = getDemoAuthSession();
+  const merchantDisplayName = session?.merchantName || session?.email?.split("@")[0] || "Merchant";
+  const userEmail = session?.email || "";
 
   const handleSignOut = () => {
     clearDemoAuthSession();
@@ -93,11 +95,11 @@ export function Sidebar({ navItems, activePath, mobile = false, open = true, onN
       <div className="mt-auto rounded-xl border border-white/10 bg-[#121210] p-3">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#D7A455] text-xs font-semibold text-[#10100E]">
-            {merchant.name.slice(0, 1)}
+            {merchantDisplayName.slice(0, 1).toUpperCase()}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-sm font-medium text-[#F5F0E6]">{merchant.storeName}</div>
-            <div className="text-[10px] uppercase tracking-[0.2em] text-[#A69D90]">{merchant.status}</div>
+            <div className="truncate text-sm font-medium text-[#F5F0E6]">{merchantDisplayName}</div>
+            <div className="truncate text-[10px] uppercase tracking-[0.15em] text-[#A69D90]">{userEmail}</div>
           </div>
         </div>
 

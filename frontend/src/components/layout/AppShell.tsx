@@ -6,7 +6,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { getDemoAuthSession, isProtectedMerchantPath } from "@/lib/auth";
-import { merchant } from "@/lib/mock-data/mock-data";
 
 const navigation = [
   { href: "/dashboard", label: "Overview" },
@@ -42,8 +41,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pageTitle = getPageTitle(pathname);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
+  const [session, setSession] = useState(getDemoAuthSession());
+
   useEffect(() => {
     const auth = getDemoAuthSession();
+    setSession(auth);
 
     if (pathname === "/login" && auth?.isAuthenticated) {
       router.replace("/dashboard");
@@ -75,6 +77,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       document.body.style.overflow = originalOverflow;
     };
   }, [mobileNavOpen]);
+
+  const merchantDisplayName = session?.merchantName || session?.email?.split("@")[0] || "Merchant";
+  const userEmail = session?.email || "";
 
   return (
     <div className="min-h-screen bg-[#0B0B0A]">
@@ -139,16 +144,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
                 <div className="hidden items-center gap-2 rounded-full border border-[#D7A455]/25 bg-[#D7A455]/10 px-2.5 py-1.5 text-[10px] font-medium text-[#F3C77F] sm:inline-flex">
                   <ShieldCheck size={12} />
-                  Test Mode
+                  Live
                 </div>
 
                 <Link href="/settings" className="flex items-center gap-2 rounded-md border border-white/10 bg-[#121210] px-2 py-1.5">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#D7A455] text-xs font-semibold text-[#0B0B0A]">
-                    {merchant.name.slice(0, 1)}
+                    {merchantDisplayName.slice(0, 1).toUpperCase()}
                   </div>
                   <div className="hidden text-left sm:block">
-                    <div className="text-[11px] text-[#D5CFC4]">{merchant.name}</div>
-                    <div className="text-[9px] uppercase tracking-[0.18em] text-[#A69D90]">{merchant.storeName}</div>
+                    <div className="text-[11px] text-[#D5CFC4]">{merchantDisplayName}</div>
+                    <div className="text-[9px] uppercase tracking-[0.18em] text-[#A69D90]">{userEmail}</div>
                   </div>
                 </Link>
               </div>

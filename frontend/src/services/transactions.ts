@@ -5,7 +5,7 @@ export interface TransactionQuery {
   page?: number;
   limit?: number;
   search?: string;
-  paymentStatus?: string;
+  status?: string;
   paymentMethod?: string;
   from?: string;
   to?: string;

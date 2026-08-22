@@ -1,0 +1,8 @@
+warning: in the working copy of 'backend/src/app.module.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/recovery/recovery.service.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/src/transactions/transactions.service.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/app/audit-logs/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/app/experiments/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/app/layout.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/app/onboarding/page.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'frontend/src/app/policies/page.tsx', LF will be replaced by CRLF the next time Git touches it

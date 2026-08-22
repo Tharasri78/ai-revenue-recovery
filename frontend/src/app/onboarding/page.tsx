@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { authGetCurrentUser, merchantCompleteOnboarding } from "@/services/auth";
+import { updatePolicy } from "@/services/policies";
 
 const steps = [
   "Business information",
@@ -30,6 +31,17 @@ export default function OnboardingPage() {
   }, [router]);
 
   async function handleFinish() {
+    try {
+      // Create/update real RecoveryPolicy in database
+      await updatePolicy({
+        mode: "ASSISTED",
+        name: "Initial Recovery Policy",
+        description: `Recovery policy created during onboarding for ${businessName}`,
+      });
+    } catch (err) {
+      console.warn("Could not save initial policy during onboarding:", err);
+    }
+
     await merchantCompleteOnboarding({
       businessName,
       category,

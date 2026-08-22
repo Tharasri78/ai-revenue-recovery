@@ -8,8 +8,17 @@ import {
 import { apiRequest } from "@/lib/api";
 import type { AuthSession, LoginCredentials, OnboardingPayload, SignupPayload } from "@/types/auth";
 
-interface BackendUser { id: string; email: string; role: string; merchantId: string }
-interface BackendMerchant { id: string; businessName: string; businessEmail: string }
+interface BackendUser { id: string; email: string; name: string; role: string; merchantId: string }
+interface BackendMerchant { id: string; businessName: string; businessEmail: string; status: string }
+
+export interface MerchantProfile {
+  merchantId: string;
+  businessName: string;
+  businessEmail: string;
+  merchantStatus: string;
+  userEmail: string;
+  userName: string;
+}
 function toSession(user: BackendUser, merchant: BackendMerchant): DemoAuthSession {
   return { userId: user.id, email: user.email, role: user.role as AuthSession["role"], merchantId: merchant.id, merchantName: merchant.businessName, isAuthenticated: true, onboardingComplete: true, createdAt: new Date().toISOString() };
 }

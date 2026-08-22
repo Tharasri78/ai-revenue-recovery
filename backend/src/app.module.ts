@@ -7,6 +7,8 @@ import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { RecoveryModule } from './recovery/recovery.module';
 import { AnalyticsModule } from './analytics/analytics.module';
+import { PoliciesModule } from './policies/policies.module';
+import { AuditLogsModule } from './audit-logs/audit-logs.module';
 
 @Module({
   imports: [
@@ -18,6 +20,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
     TransactionsModule,
     RecoveryModule,
     AnalyticsModule,
+    PoliciesModule,
+    AuditLogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -37,30 +37,61 @@ export default function TransactionsPage() {
     customerEmail: "",
   });
 
+  const [counts, setCounts] = useState({
+    all: 0,
+    successful: 0,
+    failed: 0,
+    abandoned: 0,
+    recovered: 0,
+  });
+
   const loadTransactions = () => {
-  setError("");
+    setError("");
 
-  getTransactions({
-    paymentStatus: status,
-    search: search || undefined,
-  })
-    .then(setResult)
-    .catch((cause) => {
-      if (cause instanceof ApiError && cause.status === 401) {
-        router.replace("/login");
-        return;
-      }
+    getTransactions({
+      status,
+      search: search || undefined,
+    })
+      .then(setResult)
+      .catch((cause) => {
+        if (cause instanceof ApiError && cause.status === 401) {
+          router.replace("/login");
+          return;
+        }
 
-      setError(
-        cause instanceof Error
-          ? cause.message
-          : "Unable to load transactions.",
-      );
-    });
-};
+        setError(
+          cause instanceof Error
+            ? cause.message
+            : "Unable to load transactions.",
+        );
+      });
+  };
+
+  const loadCounts = () => {
+    Promise.all([
+      getTransactions({ limit: 1 }),
+      getTransactions({ status: "SUCCESSFUL", limit: 1 }),
+      getTransactions({ status: "FAILED", limit: 1 }),
+      getTransactions({ status: "ABANDONED", limit: 1 }),
+      getTransactions({ status: "RECOVERED", limit: 1 }),
+    ])
+      .then(([allRes, succRes, failRes, abanRes, recRes]) => {
+        setCounts({
+          all: allRes.total,
+          successful: succRes.total,
+          failed: failRes.total,
+          abandoned: abanRes.total,
+          recovered: recRes.total,
+        });
+      })
+      .catch(() => {
+        // Silently preserve current counts on non-fatal background error
+      });
+  };
 
   useEffect(() => {
     loadTransactions();
+    loadCounts();
   }, [router, search, status]);
 
   const handleCreate = async (event: React.FormEvent) => {
@@ -153,14 +184,14 @@ export default function TransactionsPage() {
           </button>
         </div>
 
-        {/* Demo metrics */}
+        {/* Real metrics */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {[
-            { label: "All", value: "1,248" },
-            { label: "Successful", value: "982" },
-            { label: "Failed", value: "121" },
-            { label: "Abandoned", value: "94" },
-            { label: "Recovered", value: "51" },
+            { label: "All", value: String(counts.all) },
+            { label: "Successful", value: String(counts.successful) },
+            { label: "Failed", value: String(counts.failed) },
+            { label: "Abandoned", value: String(counts.abandoned) },
+            { label: "Recovered", value: String(counts.recovered) },
           ].map((metric) => (
             <Card key={metric.label} className="p-4">
               <p className="text-sm text-[#B7AEA2]">{metric.label}</p>

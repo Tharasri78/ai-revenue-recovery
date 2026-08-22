@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AI Revenue Recovery",
-  description: "Mock merchant revenue recovery operations dashboard",
+  description: "Merchant revenue recovery operations dashboard",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

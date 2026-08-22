@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { RecoveryModule } from './recovery/recovery.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { RecoveryModule } from './recovery/recovery.module';
     AuthModule,
     TransactionsModule,
     RecoveryModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,7 +7,7 @@ interface RecoveryActivityItem {
   amount: number;
   problem: string;
   recommendation: string;
-  confidence: number;
+  confidence: number | null;
   policy: string;
   status: string;
 }
@@ -37,7 +37,7 @@ export function RecoveryActivity({ items }: RecoveryActivityProps) {
                 <span>{formatCurrency(item.amount)}</span>
                 <span className="text-[#B7AEA2]">{item.problem}</span>
                 <span>{item.recommendation}</span>
-                <span>{item.confidence}%</span>
+                <span>{item.confidence !== null && item.confidence !== undefined ? `${item.confidence}%` : "N/A"}</span>
                 <span>{item.policy}</span>
                 <StatusBadge status={item.status} />
               </div>

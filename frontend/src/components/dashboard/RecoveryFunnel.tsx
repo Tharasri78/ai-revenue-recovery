@@ -16,7 +16,9 @@ export function RecoveryFunnel({ items }: RecoveryFunnelProps) {
           <div key={item.label}>
             <div className="mb-2 flex items-center justify-between text-sm">
               <span className="text-[#B7AEA2]">{item.label}</span>
-              <span className="font-medium text-[#F5F0E6]">{formatCompactCurrency(item.value)}</span>
+              <span className="font-medium text-[#F5F0E6]">
+                {item.label === "Recovery attempts" ? item.value : formatCompactCurrency(item.value)}
+              </span>
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-[#171613]">
               <div
